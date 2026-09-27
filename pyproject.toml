@@ -1,6 +1,6 @@
 [project]
 name = "apx-example"
-version = "0.2.0"
+version = "0.3.0"
 description = "Template for an Action Platform plugin: tools, a CLI command, an overlay, a release strategy, a replaced slot, lifecycle hooks."
 readme = "README.md"
 license = "Apache-2.0"

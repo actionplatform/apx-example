@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.0 — 2026-09-27
+
+### Features
+- the template shows one ABC per responsibility, a fake and a live suite
+
+### Bug Fixes
+- **tests:** import the matrix from scaffold.catalog
+
+### Docs
+- **spec:** the Plugin snippet as ruff formats it
+- SPEC.md, AGENTS.md, the create-plugin skill and manifests for Claude Code, Codex and Cursor
+
+### Tests
+- make tests a package so test_target imports the fake
+
 ## v0.2.0 — 2026-09-19
 
 ### Features
