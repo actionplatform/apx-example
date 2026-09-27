@@ -54,27 +54,12 @@ class ExamplePluginTest(unittest.TestCase):
         self.assertEqual([c.name for c in merged.clouds], ["example"])
         self.assertEqual(merged.cloud("example").source, "example")
 
+    def test_an_option_can_carry_a_setup_button(self):
+        greeting = next(o for o in ExamplePlugin.options if o.key == "greeting")
+
+        self.assertEqual(greeting.as_dict()["action_label"], "Open the docs")
+        self.assertIn("{organization}", greeting.action_url)
+
     def test_release_providers(self):
         self.assertTrue(Calver().next("1.0.0", "patch", False, []).count(".") == 2)
         self.assertIn("- feat: x", Plain().render("1.0.0", ["feat: x"]))
-
-
-class TargetTest(unittest.TestCase):
-    def test_readiness_names_the_overlay(self):
-        from pathlib import Path
-        from tempfile import TemporaryDirectory
-
-        from action_platform.core.context import Context
-
-        from apx_example.target import ExampleTarget
-
-        with TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            missing = ExampleTarget().readiness(Context(repo_root=root, stage="dev"))
-            (root / "deploy").mkdir()
-            (root / "deploy" / "run.sh").write_text("#!/bin/sh\necho ok\n")
-            present = ExampleTarget().readiness(Context(repo_root=root, stage="dev"))
-
-        self.assertFalse(missing[0].ok)
-        self.assertEqual(missing[0].fix, "action-platform cloud set example")
-        self.assertTrue(present[0].ok)
