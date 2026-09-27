@@ -7,6 +7,7 @@ alwaysApply: true
 - Read `SPEC.md` before changing code; follow `skills/create-plugin/SKILL.md` when creating a plugin from this template.
 - `Plugin.register` declares only: no I/O, threads or connections at import or in `register`. Never monkey-patch `action_platform.*`.
 - `DeployTarget`: `ctx.stage` is the scope's name; `readiness(ctx)` returns `Check`s without building or changing anything; long commands run through `action_platform.core.process.stream`.
+- Structure: an ABC per responsibility in `abc.py`, a frozen `Spec` per call, one module per implementation, `checks.py` for readiness; `target.py` composes them through `parts(spec)`. `tests/fake.py` answers only what the real service answers; `tests/live/` runs against the real destination.
 - Overlay: one IaC file per cloud with the runtime chosen by `{{ cookiecutter.language }}`, a one-line `Makefile` calling `ap-build package`, `requirements/`, `DEPLOY.md`. No `_lang/` folders.
 - Style: no comments inside function bodies, no test docstrings; `ruff check . && ruff format --check . && pytest` before a commit.
 - Git-flow branches `<kind>/<issue>-<slug>`, Conventional Commits, one PR per issue.

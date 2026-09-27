@@ -14,6 +14,7 @@ A template for an Action Platform plugin. The contract is `SPEC.md`; the skill i
 - Never monkey-patch `action_platform.*`; replace a slot or ask for a hook.
 - Long commands go through `action_platform.core.process.stream` so their output reaches the platform's job log.
 - `needs` lists every host and environment variable the plugin touches.
+- One ABC per responsibility (`abc.py`), a `Spec` per call, the target composing them through `parts()`; `tests/fake.py` built from the real service's answers, `tests/live/` against the real destination.
 
 ## Commits and branches
 

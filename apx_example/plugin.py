@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from action_platform.abc import Plugin, Surface
+from action_platform.abc import Option, Plugin, Surface
 from action_platform.core.context import Context, DeployResult
 from action_platform.logging import logger
 
@@ -18,6 +18,16 @@ class ExamplePlugin(Plugin):
     description = "Template plugin: a tool, a command, a deploy target with readiness, an overlay, a release strategy, stricter git-flow"
     min_core = "0.32"
     needs = ["nothing outside this machine"]
+    options = [
+        Option(
+            "greeting",
+            "Greeting",
+            "text",
+            help="The word example_hello says. The button opens where a value would come from.",
+            action_label="Open the docs",
+            action_url="https://github.com/actionplatform/apx-example?org={organization}",
+        ),
+    ]
 
     @property
     def overlays(self) -> Path:

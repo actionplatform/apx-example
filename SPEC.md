@@ -9,7 +9,7 @@ A plugin is a Python package named `apx-<slug>` that the platform discovers thro
 | Name | `apx-<slug>` on PyPI, module `apx_<slug>`; the slug is `[a-z0-9-]`, not one of `core platform official admin system test internal` |
 | Dependency | `action-platform>=<min_core>`; `min_core` on the `Plugin` says the same |
 | Entry points | `action_platform.plugins` → the `Plugin` class; `action_platform.deploy_target` → each `DeployTarget` (name = the cloud, `aws/lambda`); optional `action_platform.ci_runner`, `action_platform.source_host`, `action_platform.release_strategy`, `action_platform.changelog` |
-| Layout | `apx_<slug>/{plugin.py, target.py, tools.py, cli.py, overlays/}`, `tests/`, `pyproject.toml`, `LAST_VERSION`, `CHANGELOG.md`, `platform.toml`, `AGENTS.md` |
+| Layout | `apx_<slug>/{plugin.py, target.py, abc.py, spec.py, <one module per responsibility>, checks.py, tools.py, cli.py, overlays/}`, `tests/{fake.py, live/}`, `pyproject.toml`, `LAST_VERSION`, `CHANGELOG.md`, `platform.toml`, `AGENTS.md` |
 | Style | no comments inside function bodies, no test docstrings, `ruff check && ruff format --check` clean, `pytest` green |
 
 ## 2. `Plugin` (`action_platform.abc.Plugin`)
@@ -34,6 +34,7 @@ class MyPlugin(Plugin):
 `overlays` points at a folder shaped like the templates repository; `register` declares only (tools, commands, slots); `after_release(ctx)` and `after_deploy(results)` are optional hooks.
 
 - `needs` lists every host the plugin talks to and every environment variable it reads; the CLI shows it before installing.
+- An `Option` may carry `action_label` and `action_url` (and `action_copy`, a command copied to the clipboard): the Configure dialog shows a button that opens the page where the value comes from, `{issuer}` and `{organization}` filled in. apx-aws-lambda's **Connect AWS** is one.
 - `options` are what an organization fills in under Plugins → Configure; the platform stores them and passes each to a deploy as `AP_<SLUG>_<KEY>` (upper case, `-` → `_`) in `ctx.env`, plus `AP_APP=<org>/<project>/<app>`.
 - `register` declares only. No network, no threads, no file writes at import or in `register`.
 - Never monkey-patch `action_platform.*`; replace a slot (`surface.core.replace("gitflow_rules", MyRules)`) or ask for a hook.
@@ -51,6 +52,20 @@ class MyPlugin(Plugin):
 | `diagnose(ctx)` | `Diagnosis(ok, target, status, url, details)` | |
 | `delete(ctx)` | tear the stage down | idempotent |
 | `rollback(ctx, to_version)` | optional | raise `NotImplementedError` when the cloud cannot |
+
+### Structure
+
+Keep the target thin; give every responsibility a contract.
+
+| File | Holds |
+|---|---|
+| `abc.py` | one ABC per responsibility — for a real cloud: `Api`, `Registry`, `Provisioner` (find/ensure/remove what the deploy needs), `Domains`, `Deployments` (start, wait, why it failed), `Health`, `Readiness` |
+| `spec.py` | a frozen `Spec` resolved once per call from `ctx`, the target's options and `platform.toml`; the target caches nothing but the last context `verify` and `url` need |
+| one module per ABC | the implementation (`client.py`, `provision.py`, `deployments.py`…) |
+| `checks.py` | one `Readiness` class per check |
+| `target.py` | the `DeployTarget` methods, composing the parts through `parts(spec)`; a test or a subclass swaps one there |
+
+This template shows it in miniature (`Cloud`, `Readiness`); [apx-dokploy](https://github.com/actionplatform/apx-dokploy) is the full version.
 
 Credentials: never a long-lived key in the plugin. Prefer a token the platform signs (`ctx.identity_token(audience)`) exchanged at the cloud (OIDC / a proxy in the user's account), else the cloud CLI's own chain.
 
@@ -73,7 +88,11 @@ MCP tools come out as `<slug>_<name>`; annotate them (`READ_ONLY`, `REACHES_OUT`
 
 ## 6. Tests
 
-`pytest` with no network: mock the cloud CLI (`shell.run` / `stream`), assert the commands built, the `Check`s returned and the `DeployResult`. Cover `readiness` for the failure the user will actually hit (missing credentials, wrong permission, resource in a bad state).
+`pytest` with no network: `tests/fake.py` stands in for the cloud (a fake API, or the CLI mocked through `shell.run` / `stream`); assert the calls made, the `Check`s returned and the `DeployResult`. Cover `readiness` for the failure the user will actually hit (missing credentials, wrong permission, resource in a bad state).
+
+**The fake answers only what the real service answers.** Read the service's source or API reference for each response the plugin relies on — apx-dokploy's fake once returned a field Dokploy's `project.all` never sends, and every deploy created a new application while the suite stayed green.
+
+`tests/live/` runs the target against the real destination and is skipped without its credentials. Run it in CI whenever the destination can be stood up there (apx-dokploy installs Dokploy on the runner) or a sandbox account exists: two deploys to one scope, `verify`, `delete`.
 
 ## 7. Release and publish
 

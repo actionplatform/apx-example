@@ -4,12 +4,15 @@ Template for an [Action Platform](https://github.com/actionplatform/action-platf
 
 | File | Extension point |
 |---|---|
-| `plugin.py` | the `Plugin`: slug, `needs`, `register`, `after_release`, `after_deploy` |
+| `plugin.py` | the `Plugin`: slug, `needs`, `options` (one with a setup button), `register`, `after_release`, `after_deploy` |
 | `tools.py` | MCP tools `example_hello` and `example_remember`, with input and output schemas; `remember` writes the plugin's options store |
 | `cli.py` | `action-platform example hello` |
 | `rules.py` | a replaced core slot (`gitflow_rules`) — stricter branch kinds while the plugin is enabled |
 | `release.py` | named providers: `[release] strategy = "calver"`, `[release] changelog = "plain"` |
-| `target.py` | the `DeployTarget` for the `example` cloud: `preflight`, `readiness` (checks before a deploy), `deploy` (streams its output to the job log), `verify`, `diagnose`, `delete` |
+| `target.py` | the `DeployTarget` for the `example` cloud — `preflight`, `readiness`, `deploy`, `verify`, `diagnose`, `delete` — composing the parts below through `parts(spec)` |
+| `abc.py`, `spec.py` | one ABC per responsibility (`Cloud`, `Readiness`); a frozen `Spec` per call |
+| `cloud.py`, `checks.py` | the implementations: the overlay's script (streams its output to the job log), the readiness checks |
+| `tests/fake.py`, `tests/live/` | the cloud in memory for fast tests; a suite against the real destination, skipped without it |
 | `overlays/` | a cloud overlay `example` — plain files, copied as they are by `action-platform cloud set example`; add a `cookiecutter.json` only when the files need rendering |
 
 ## For agents and editors
