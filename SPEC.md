@@ -19,7 +19,7 @@ class MyPlugin(Plugin):
     slug = "my-cloud"
     name = "My Cloud"
     description = "One line"
-    min_core = "0.26"
+    min_core = "0.32"
     needs = ["tool: mycloud-cli", "env: MYCLOUD_REGION", "net: api.mycloud.com"]
     options = [Option(key="project_id", label="Project", kind="text", required=True)]
 
